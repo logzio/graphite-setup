@@ -7,6 +7,8 @@ ENV GRAPHITE_VERSION 0.9.15
 RUN apt-get update && \
     apt-get -y install python-dev python-pip
 
+# logging support
+RUN mkdir -p /var/log/carbon /var/log/graphite /var/log/nginx
 
 RUN pip install whisper==$GRAPHITE_VERSION && \
     pip install https://github.com/Banno/carbon/tarball/0.9.x-fix-events-callback && \

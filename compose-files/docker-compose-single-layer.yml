@@ -1,0 +1,58 @@
+haproxy:
+  image: registry.internal.logz.io:5000/graphite-haproxy
+  net: host
+  environment:
+    RELAY_LISTENERS: "relay1:2104"
+
+relay1:
+  image: registry.internal.logz.io:5000/carbon-relay
+  ports:
+    - "2103:2103"
+    - "2104:2104"
+  environment:
+    LINE_RECEIVER_PORT: 2103
+    PICKLE_RECEIVER_PORT: 2104
+    RELAY_METHOD: consistent-hashing
+    DESTINATIONS: cache1:2014:a1
+  links:
+    - cache1
+
+cache1:
+  image: registry.internal.logz.io:5000/carbon-cache
+  volumes_from:
+    - whisper
+  ports:
+    - "7012:7012"
+    - "2013:2013"
+    - "2014:2014"
+  environment:
+    NODE_NAME: cache:a1
+    LINE_RECEIVER_PORT: 2013
+    PICKLE_RECEIVER_PORT: 2014
+    CACHE_QUERY_PORT: 7012
+    LOCAL_DATA_DIR: /opt/graphite/storage/whisper
+  command: --instance=a1
+
+web:
+  image: registry.internal.logz.io:5000/graphite-web
+  volumes_from:
+    - whisper
+  environment:
+    CARBONLINK_HOSTS: cache1:7012
+    WHISPER_DIR: /opt/graphite/storage/whisper
+  ports:
+    - "8080:80"
+  links:
+    - cache1
+
+whisper:
+  image: registry.internal.logz.io:5000/whisper
+  volumes:
+    - /Users/ofer_v/whisper:/opt/graphite/storage/whisper
+
+test:
+  build: ./test
+  links:
+    - web
+  volumes_from:
+    - whisper

@@ -1,44 +1,12 @@
 haproxy:
-  image: banno/graphite-haproxy
+  image: registry.internal.logz.io:5000/graphite-haproxy
   net: host
-
-web:
-  image: banno/graphite-web
   environment:
-    CLUSTER_SERVERS: weba:80,webb:80
-  ports:
-    - "8080:80"
-  links:
-    - weba
-    - webb
+    LINE_RELAY_LISTENERS: "relay1:2103,relay2:2203"
+    PICKLE_RELAY_LISTENERS: "relay1:2104,relay2:2204"
 
-relay:
-  image: banno/carbon-relay
-  ports:
-    - "3003:2003"
-    - "3004:2004"
-  environment:
-    RELAY_METHOD: consistent-hashing
-    DESTINATIONS: relaya:2104, relayb:2204
-  links:
-    - relaya
-    - relayb
-
-weba:
-  image: banno/graphite-web
-  volumes_from:
-    - whisper
-  environment:
-    CARBONLINK_HOSTS: cachea1:7012,cachea2:7022
-    WHISPER_DIR: /opt/graphite/storage/whispera
-  ports:
-    - "8180:80"
-  links:
-    - cachea1
-    - cachea2
-
-relaya:
-  image: banno/carbon-relay
+relay1:
+  image: registry.internal.logz.io:5000/carbon-relay
   ports:
     - "2103:2103"
     - "2104:2104"
@@ -46,15 +14,39 @@ relaya:
     LINE_RECEIVER_PORT: 2103
     PICKLE_RECEIVER_PORT: 2104
     RELAY_METHOD: consistent-hashing
-    DESTINATIONS: cachea1:2014:a1, cachea2:2024:a2
+    DESTINATIONS: cache1:2014:a1,cache2:2024:a2,cache3:2034:a3,cache4:2044:a4
+  volumes: 
+    - "~/logs/gaia/carbon/r/1:/var/log/carbon"
   links:
-    - cachea1
-    - cachea2
+    - cache1
+    - cache2
+    - cache3
+    - cache4
 
-cachea1:
-  image: banno/carbon-cache
+relay2:
+  image: registry.internal.logz.io:5000/carbon-relay
+  ports:
+    - "2203:2203"
+    - "2204:2204"
+  environment:
+    LINE_RECEIVER_PORT: 2203
+    PICKLE_RECEIVER_PORT: 2204
+    RELAY_METHOD: consistent-hashing
+    DESTINATIONS: cache1:2014:a1,cache2:2024:a2,cache3:2034:a3,cache4:2044:a4
+  volumes: 
+    - "~/logs/gaia/carbon/r/2:/var/log/carbon"
+  links:
+    - cache1
+    - cache2
+    - cache3
+    - cache4
+
+cache1:
+  image: registry.internal.logz.io:5000/carbon-cache
   volumes_from:
     - whisper
+  volumes: 
+    - "~/logs/gaia/carbon/c/1:/var/log/carbon"
   ports:
     - "7012:7012"
     - "2013:2013"
@@ -64,13 +56,15 @@ cachea1:
     LINE_RECEIVER_PORT: 2013
     PICKLE_RECEIVER_PORT: 2014
     CACHE_QUERY_PORT: 7012
-    LOCAL_DATA_DIR: /opt/graphite/storage/whispera
+    LOCAL_DATA_DIR: /opt/graphite/storage/whisper
   command: --instance=a1
 
-cachea2:
-  image: banno/carbon-cache
+cache2:
+  image: registry.internal.logz.io:5000/carbon-cache
   volumes_from:
     - whisper
+  volumes: 
+    - "~/logs/gaia/carbon/c/2:/var/log/carbon"
   ports:
     - "7022:7022"
     - "2023:2023"
@@ -80,78 +74,65 @@ cachea2:
     LINE_RECEIVER_PORT: 2023
     PICKLE_RECEIVER_PORT: 2024
     CACHE_QUERY_PORT: 7022
-    LOCAL_DATA_DIR: /opt/graphite/storage/whispera
+    LOCAL_DATA_DIR: /opt/graphite/storage/whisper
   command: --instance=a2
 
-webb:
-  image: banno/graphite-web
+cache3:
+  image: registry.internal.logz.io:5000/carbon-cache
   volumes_from:
     - whisper
-  environment:
-    CARBONLINK_HOSTS: cacheb1:7112,cacheb2:7122
-    WHISPER_DIR: /opt/graphite/storage/whisperb
+  volumes: 
+    - "~/logs/gaia/carbon/c/3:/var/log/carbon"
   ports:
-    - "8280:80"
+    - "7032:7032"
+    - "2033:2033"
+    - "2034:2034"
+  environment:
+    NODE_NAME: cache:a3
+    LINE_RECEIVER_PORT: 2033
+    PICKLE_RECEIVER_PORT: 2034
+    CACHE_QUERY_PORT: 7032
+    LOCAL_DATA_DIR: /opt/graphite/storage/whisper
+  command: --instance=a3
+
+cache4:
+  image: registry.internal.logz.io:5000/carbon-cache
+  volumes_from:
+    - whisper
+  volumes: 
+    - "~/logs/gaia/carbon/c/4:/var/log/carbon"
+  ports:
+    - "7042:7042"
+    - "2043:2043"
+    - "2044:2044"
+  environment:
+    NODE_NAME: cache:a4
+    LINE_RECEIVER_PORT: 2043
+    PICKLE_RECEIVER_PORT: 2044
+    CACHE_QUERY_PORT: 7042
+    LOCAL_DATA_DIR: /opt/graphite/storage/whisper
+  command: --instance=a4
+
+web:
+  image: registry.internal.logz.io:5000/graphite-web
+  volumes_from:
+    - whisper
+  volumes: 
+    - "~/logs/gaia/graphite:/var/log/graphite"
+    - "~/logs/gaia/nginx:/var/log/nginx"
+  environment:
+    CARBONLINK_HOSTS: cache1:7012,cache2:7022,cache3:7032,cache4:7042
+    WHISPER_DIR: /opt/graphite/storage/whisper
+  ports:
+    - "8080:80"
   links:
-    - cacheb1
-    - cacheb2
-
-relayb:
-  image: banno/carbon-relay
-  ports:
-    - "2203:2203"
-    - "2204:2204"
-  environment:
-    LINE_RECEIVER_PORT: 2203
-    PICKLE_RECEIVER_PORT: 2204
-    RELAY_METHOD: consistent-hashing
-    DESTINATIONS: cacheb1:2114:b1, cacheb2:2124:b2
-  links:
-    - cacheb1
-    - cacheb2
-
-cacheb1:
-  image: banno/carbon-cache
-  volumes_from:
-    - whisper
-  ports:
-    - "7112:7112"
-    - "2113:2113"
-    - "2114:2114"
-  environment:
-    NODE_NAME: cache:b1
-    LINE_RECEIVER_PORT: 2113
-    PICKLE_RECEIVER_PORT: 2114
-    CACHE_QUERY_PORT: 7112
-    LOCAL_DATA_DIR: /opt/graphite/storage/whisperb
-  command: --instance=b1
-
-cacheb2:
-  image: banno/carbon-cache
-  volumes_from:
-    - whisper
-  ports:
-    - "7122:7122"
-    - "2123:2123"
-    - "2124:2124"
-  environment:
-    NODE_NAME: cache:b2
-    LINE_RECEIVER_PORT: 2123
-    PICKLE_RECEIVER_PORT: 2124
-    CACHE_QUERY_PORT: 7122
-    LOCAL_DATA_DIR: /opt/graphite/storage/whisperb
-  command: --instance=b2
+    - cache1
+    - cache2
+    - cache3
+    - cache4
 
 whisper:
-  image: busybox
+  image: registry.internal.logz.io:5000/whisper
   volumes:
-    - /tmp/whispera:/opt/graphite/storage/whispera
-    - /tmp/whisperb:/opt/graphite/storage/whisperb
+    - /Users/ofer_v/whisper:/opt/graphite/storage/whisper
 
-test:
-  build: ./test
-  links:
-    - web
-    - relay
-  volumes_from:
-    - whisper
