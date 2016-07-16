@@ -14,4 +14,6 @@ if os.getenv("MEMCACHE_HOSTS"):
 if os.getenv("WHISPER_DIR"):
     WHISPER_DIR = os.getenv("WHISPER_DIR")
 
+CARBONLINK_QUERY_BULK = True
+
 SECRET_KEY = str(datetime.now())

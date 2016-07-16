@@ -82,8 +82,3 @@ task :write_line_data do
     sh %<echo "STAGING.local.test-1.value #{Random.rand(8)} #{stamp}" | nc -c graphite-staging.internal.logz.io 2003>
   end
 end
-
-desc "Write pickle data to carbon"
-task :write_pickle_data do
-  sh "test/pickle-client.py"
-end
