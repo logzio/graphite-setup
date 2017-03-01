@@ -9,37 +9,37 @@ namespace :build do
   desc "Build the base image"
   task :base do
     sh "docker build -t registry.internal.logz.io:5000/carbon-base:#{graphite_version} carbon-base"
-    sh "docker tag -f registry.internal.logz.io:5000/carbon-base:#{graphite_version} registry.internal.logz.io:5000/carbon-base:latest"
+    sh "docker tag  registry.internal.logz.io:5000/carbon-base:#{graphite_version} registry.internal.logz.io:5000/carbon-base:latest"
   end
 
   desc "Build the cache image"
   task :cache do
     sh "docker build -t registry.internal.logz.io:5000/carbon-cache:#{graphite_version} carbon-cache"
-    sh "docker tag -f registry.internal.logz.io:5000/carbon-cache:#{graphite_version} registry.internal.logz.io:5000/carbon-cache:latest"
+    sh "docker tag  registry.internal.logz.io:5000/carbon-cache:#{graphite_version} registry.internal.logz.io:5000/carbon-cache:latest"
   end
 
   desc "Build the web image"
   task :web do
     sh "docker build -t registry.internal.logz.io:5000/graphite-web:#{graphite_version} web"
-    sh "docker tag -f registry.internal.logz.io:5000/graphite-web:#{graphite_version} registry.internal.logz.io:5000/graphite-web:latest"
+    sh "docker tag  registry.internal.logz.io:5000/graphite-web:#{graphite_version} registry.internal.logz.io:5000/graphite-web:latest"
   end
 
   desc "Build the relay image"
   task :relay do
     sh "docker build -t registry.internal.logz.io:5000/carbon-relay:#{graphite_version} carbon-relay"
-    sh "docker tag -f registry.internal.logz.io:5000/carbon-relay:#{graphite_version} registry.internal.logz.io:5000/carbon-relay:latest"
+    sh "docker tag  registry.internal.logz.io:5000/carbon-relay:#{graphite_version} registry.internal.logz.io:5000/carbon-relay:latest"
   end
 
   desc "Build haproxy proxy"
   task :haproxy do
     sh "docker build -t registry.internal.logz.io:5000/graphite-haproxy:#{graphite_version} haproxy"
-    sh "docker tag -f registry.internal.logz.io:5000/graphite-haproxy:#{graphite_version} registry.internal.logz.io:5000/graphite-haproxy:latest"
+    sh "docker tag  registry.internal.logz.io:5000/graphite-haproxy:#{graphite_version} registry.internal.logz.io:5000/graphite-haproxy:latest"
   end
 
   desc "Build the whisper image"
   task :whisper do
     sh "docker build -t registry.internal.logz.io:5000/whisper:#{graphite_version} whisper"
-    sh "docker tag -f registry.internal.logz.io:5000/whisper:#{graphite_version} registry.internal.logz.io:5000/whisper:latest"
+    sh "docker tag  registry.internal.logz.io:5000/whisper:#{graphite_version} registry.internal.logz.io:5000/whisper:latest"
   end
 
 end
